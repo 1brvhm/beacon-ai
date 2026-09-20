@@ -1,0 +1,8 @@
+{
+  "name": "beacon-scholarships",
+  "version": "1.0.0",
+  "description": "AI advisor that matches US students to real college scholarships.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<title>Beacon — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{--canvas:#EDEFF3;--surface:#fff;--ink:#111726;--ink2:#5b6472;--line:#E3E7EE;--brand:#2743c4;--brand-deep:#1a2c86;--brand-soft:#eaeefc;--gold:#b07d1e;--green:#0d7a56;--green-soft:#e4f2ec;--red:#b3261e;--red-soft:#fbe9e7;--shadow:0 1px 2px rgba(17,23,38,.05),0 8px 30px rgba(17,23,38,.06)}
+*{box-sizing:border-box}html,body{margin:0}body{font-family:'Hanken Grotesk',system-ui,sans-serif;color:var(--ink);background:var(--canvas);-webkit-font-smoothing:antialiased;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;margin:0}
+.wrap{max-width:920px;margin:0 auto;padding:24px 20px 70px}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(155deg,var(--brand),var(--brand-deep));display:grid;place-items:center;box-shadow:0 6px 18px rgba(39,67,196,.28)}
+.top h1{font-size:22px}.top .tag{font-size:12px;color:var(--ink2);margin-top:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+label{font-size:13px;font-weight:600;display:block;margin-bottom:7px}
+input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:var(--brand)}
+.btn{border:none;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:transform .1s,opacity .1s}
+.btn:hover{transform:translateY(-1px)}.btn:disabled{opacity:.5;transform:none;cursor:default}
+.btn.dark{background:var(--ink);color:#fff}.btn.brand{background:var(--brand);color:#fff}
+.btn.ok{background:var(--green);color:#fff}.btn.no{background:#fff;color:var(--red);border:1px solid var(--red-soft)}
+.btn.ghost{background:#fff;color:var(--ink2);border:1px solid var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.grow{flex:1;min-width:180px}
+.muted{color:var(--ink2);font-size:13px;line-height:1.5}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--brand-soft);color:var(--brand-deep)}
+.pill.g{background:var(--green-soft);color:var(--green)}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 4px 12px}
+.hd h2{font-size:18px}.badge{font-size:12px;color:var(--ink2)}
+.card{border:1px solid var(--line);border-radius:13px;padding:15px;margin-bottom:12px;background:#fff}
+.card h3{font-size:15.5px;margin-bottom:3px}
+.card .src{font-size:11.5px;color:var(--ink2);margin:2px 0 10px}
+.card a{color:var(--brand);font-size:13px;font-weight:600;text-decoration:none;word-break:break-all}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.grid2 .full{grid-column:1/-1}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.edit label{font-size:11px;color:var(--ink2);margin-bottom:4px}
+.edit input,.edit textarea,.edit select{font-size:13px;padding:8px 10px}
+.note{padding:11px 14px;border-radius:10px;font-size:13px;margin-top:12px;line-height:1.45}
+.note.ok{background:var(--green-soft);color:var(--green)}.note.err{background:var(--red-soft);color:var(--red)}
+.empty{color:var(--ink2);font-size:14px;padding:14px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;margin-right:7px}
+@keyframes s{to{transform:rotate(360deg)}}
+.link{color:var(--brand);font-weight:600;text-decoration:none;font-size:13px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect } = React;
+const CATS = ["need","merit","veterans","disability","stem","identity","state"];
+const LEVELS = ["any","hs-senior","college"];
+
+function api(path, token, opts={}) {
+  return fetch(path, { ...opts, headers: { "content-type":"application/json", "x-admin-token": token, ...(opts.headers||{}) } });
+}
+
+function Editable({ item, onApprove, onReject, busy }) {
+  const [f, setF] = useState({ name:item.name, amt:item.amt, max:item.max, cat:item.cat, states:item.states, gpa:item.gpa==null?"":item.gpa, level:item.level, difficulty:item.difficulty==null?5:item.difficulty, time:item.time||"Varies", who:item.who, url:item.url });
+  const set = (k,v) => setF((p)=>({ ...p, [k]:v }));
+  return (
+    <div className="card">
+      <span className="pill">pending</span>
+      <div className="src">{item.source}</div>
+      <div className="edit">
+        <div className="grid2">
+          <div className="full"><label>Name</label><input value={f.name} onChange={(e)=>set("name",e.target.value)} /></div>
+          <div><label>Amount shown</label><input value={f.amt} onChange={(e)=>set("amt",e.target.value)} /></div>
+          <div><label>Max ($, number)</label><input type="number" value={f.max} onChange={(e)=>set("max",e.target.value)} /></div>
+          <div><label>Category</label><select value={f.cat} onChange={(e)=>set("cat",e.target.value)}>{CATS.map((c)=><option key={c}>{c}</option>)}</select></div>
+          <div><label>State (all or XX)</label><input value={f.states} onChange={(e)=>set("states",e.target.value)} /></div>
+          <div><label>Min GPA (blank=none)</label><input value={f.gpa} onChange={(e)=>set("gpa",e.target.value)} /></div>
+          <div><label>Level</label><select value={f.level} onChange={(e)=>set("level",e.target.value)}>{LEVELS.map((c)=><option key={c}>{c}</option>)}</select></div>
+          <div><label>Difficulty (1-10)</label><input type="number" min="1" max="10" value={f.difficulty} onChange={(e)=>set("difficulty",e.target.value)} /></div>
+          <div><label>Est. time</label><input value={f.time} onChange={(e)=>set("time",e.target.value)} placeholder="e.g. 2-4 hrs" /></div>
+          <div className="full"><label>Who it's for</label><textarea rows={2} value={f.who} onChange={(e)=>set("who",e.target.value)} /></div>
+          <div className="full"><label>Official URL</label><input value={f.url} onChange={(e)=>set("url",e.target.value)} /></div>
+        </div>
+      </div>
+      <a href={f.url} target="_blank" rel="noopener noreferrer">Open link to verify ↗</a>
+      <div className="acts">
+        <button className="btn ok" disabled={busy} onClick={()=>onApprove(item.id,{ ...f, gpa: f.gpa===""?null:f.gpa })}>Approve &amp; publish</button>
+        <button className="btn no" disabled={busy} onClick={()=>onReject(item.id)}>Reject</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [token, setToken] = useState(sessionStorage.getItem("beacon_admin") || "");
+  const [authed, setAuthed] = useState(false);
+  const [pending, setPending] = useState([]);
+  const [approved, setApproved] = useState([]);
+  const [storeOk, setStoreOk] = useState(true);
+  const [focus, setFocus] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [discovering, setDiscovering] = useState(false);
+  const [note, setNote] = useState(null);
+
+  async function load(tok) {
+    const res = await api("/api/admin-queue", tok);
+    if (res.status === 401) { setAuthed(false); setNote({ t:"err", m:"Wrong admin token." }); return false; }
+    const d = await res.json();
+    setPending(d.pending||[]); setApproved(d.approved||[]); setStoreOk(d.storeReady); setAuthed(true);
+    sessionStorage.setItem("beacon_admin", tok);
+    return true;
+  }
+  useEffect(()=>{ if (token) load(token); }, []);
+
+  async function discover() {
+    setDiscovering(true); setNote(null);
+    try {
+      const res = await api("/api/discover", token, { method:"POST", body: JSON.stringify({ focus }) });
+      const d = await res.json();
+      if (!res.ok) setNote({ t:"err", m: d.error || "Discovery failed." });
+      else { setNote({ t:"ok", m:`Scanned ${d.scanned}, added ${d.added} new candidate${d.added===1?"":"s"} to review.` }); await load(token); }
+    } catch { setNote({ t:"err", m:"Discovery failed." }); }
+    setDiscovering(false);
+  }
+  async function approve(id, item) { setBusy(true); await api("/api/admin-review", token, { method:"POST", body: JSON.stringify({ id, action:"approve", item }) }); await load(token); setBusy(false); }
+  async function reject(id) { setBusy(true); await api("/api/admin-review", token, { method:"POST", body: JSON.stringify({ id, action:"reject" }) }); await load(token); setBusy(false); }
+  async function remove(id) { setBusy(true); await api("/api/admin-review", token, { method:"POST", body: JSON.stringify({ id, action:"remove" }) }); await load(token); setBusy(false); }
+
+  if (!authed) {
+    return (
+      <div className="wrap">
+        <div className="top"><div className="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v3M12 22a6 6 0 0 1-6-6c0-2 1-3.5 2.5-5M12 22a6 6 0 0 0 6-6c0-2-1-3.5-2.5-5"/><path d="M8.5 11 12 6l3.5 5"/><path d="M7 16h10"/></svg></div><div><h1>Beacon Admin</h1><div className="tag">Private review console</div></div></div>
+        <div className="panel">
+          <label>Admin token</label>
+          <input type="password" value={token} placeholder="Paste your ADMIN_TOKEN" onChange={(e)=>setToken(e.target.value)} onKeyDown={(e)=>{ if(e.key==="Enter") load(token); }} />
+          <div style={{marginTop:12}}><button className="btn dark" onClick={()=>load(token)}>Unlock</button></div>
+          {note && <div className={"note "+note.t}>{note.m}</div>}
+          <p className="muted" style={{marginTop:14}}>This is the value you set as <b>ADMIN_TOKEN</b> in your Vercel environment variables. <a className="link" href="/">← Back to site</a></p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="wrap">
+      <div className="top"><div className="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v3M12 22a6 6 0 0 1-6-6c0-2 1-3.5 2.5-5M12 22a6 6 0 0 0 6-6c0-2-1-3.5-2.5-5"/><path d="M8.5 11 12 6l3.5 5"/><path d="M7 16h10"/></svg></div><div><h1>Beacon Admin</h1><div className="tag"><a className="link" href="/">View live site ↗</a></div></div></div>
+
+      {!storeOk && <div className="note err">Storage isn't set up yet. Add the <b>Upstash Redis</b> integration on Vercel (it auto-adds the keys), then reload. Until then, discovery and approvals can't save.</div>}
+
+      <div className="panel">
+        <label>Find new scholarships (live web search)</label>
+        <div className="row">
+          <div className="grow"><input value={focus} placeholder="Optional focus, e.g. 'disability scholarships in California' — leave blank for a broad sweep" onChange={(e)=>setFocus(e.target.value)} /></div>
+          <button className="btn brand" disabled={discovering || !storeOk} onClick={discover}>{discovering ? <span><span className="spin"></span>Searching…</span> : "Run discovery"}</button>
+        </div>
+        <p className="muted" style={{marginTop:10}}>Searches the web, then drops candidates into the review queue below. Nothing goes live until you approve it. Runs cost a few cents each.</p>
+        {note && <div className={"note "+note.t}>{note.m}</div>}
+      </div>
+
+      <div className="hd"><h2>Review queue</h2><span className="badge">{pending.length} pending</span></div>
+      {pending.length === 0
+        ? <div className="empty">Nothing to review. Run discovery to find new candidates.</div>
+        : pending.map((it) => <Editable key={it.id} item={it} onApprove={approve} onReject={reject} busy={busy} />)}
+
+      <div className="hd"><h2>Published finds</h2><span className="badge">{approved.length} live</span></div>
+      <p className="muted" style={{margin:"0 4px 12px"}}>These appear to students alongside your curated list. (Your original curated scholarships live in <b>lib/scholarships.js</b> and always show.)</p>
+      {approved.length === 0
+        ? <div className="empty">No approved finds yet.</div>
+        : approved.map((it) => (
+          <div className="card" key={it.id}>
+            <span className="pill g">live</span>
+            <h3>{it.name}</h3>
+            <div className="src">{it.amt} · {it.cat}{it.states!=="all"?" · "+it.states:""}</div>
+            <a href={it.url} target="_blank" rel="noopener noreferrer">{it.url}</a>
+            <div className="acts"><button className="btn no" disabled={busy} onClick={()=>remove(it.id)}>Unpublish</button></div>
+          </div>
+        ))}
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

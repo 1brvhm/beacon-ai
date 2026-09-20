@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Beacon — Find scholarships you're actually eligible for</title>
+<meta name="description" content="An AI advisor that matches US students to real, verified college scholarships — for veterans' families, students with disabilities, and everyone else." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --canvas:#EDEFF3; --surface:#FFFFFF; --ink:#111726; --ink2:#5b6472;
+  --line:#E3E7EE; --brand:#2743c4; --brand-deep:#1a2c86; --brand-soft:#eaeefc;
+  --gold:#b07d1e; --green:#0d7a56; --green-soft:#e4f2ec; --hard:#c0442e;
+  --violet:#6b41c4; --violet-soft:#efe9fb; --shadow:0 1px 2px rgba(17,23,38,.05),0 8px 30px rgba(17,23,38,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;color:var(--ink);background:var(--canvas);-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;margin:0;letter-spacing:-.01em}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(155deg,var(--brand),var(--brand-deep));display:grid;place-items:center;box-shadow:0 6px 18px rgba(39,67,196,.28)}
+.brand h1{font-size:24px;line-height:1}
+.brand .sub{font-size:13px;color:var(--ink2);margin-top:3px}
+.stat{text-align:right;font-size:13px;color:var(--ink2)}
+.stat b{font-family:'Fraunces',serif;font-size:22px;color:var(--ink);display:block;line-height:1}
+.grid{display:grid;grid-template-columns:322px 1fr;gap:20px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.side{padding:20px}
+.side .lead{font-family:'Fraunces',serif;font-size:19px;margin-bottom:4px}
+.side .hint{font-size:13px;color:var(--ink2);line-height:1.5;margin-bottom:18px}
+.field{margin-bottom:18px}
+.field>label{display:block;font-size:13px;font-weight:600;margin-bottom:9px;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:#fff;color:var(--ink2);padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .14s;font-family:inherit}
+.chip:hover{border-color:#c6cddb;color:var(--ink)}
+.chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+select,input[type=number]{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff;appearance:none}
+select:focus,input:focus,.ta:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:var(--brand)}
+.range{width:100%;accent-color:var(--brand);margin-top:4px}
+.range-val{font-size:13px;color:var(--ink2);display:flex;justify-content:space-between;margin-top:6px}
+.range-val b{color:var(--gold);font-family:'Fraunces',serif;font-size:15px}
+.count{margin-top:6px;padding:13px 15px;border-radius:12px;background:var(--brand-soft);font-size:13.5px;color:var(--brand-deep);line-height:1.45}
+.count b{font-family:'Fraunces',serif;font-size:17px}
+.find{width:100%;margin-top:16px;padding:13px;border:none;border-radius:12px;background:var(--ink);color:#fff;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:transform .12s,background .12s}
+.find:hover{background:#000;transform:translateY(-1px)}
+.find:disabled{opacity:.5;cursor:default;transform:none}
+.mainpanel{display:flex;flex-direction:column;height:min(80vh,780px);min-height:540px}
+.tabbar{display:flex;gap:2px;padding:10px 12px 0;border-bottom:1px solid var(--line)}
+.tab{border:none;background:none;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink2);padding:10px 15px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+.chatwrap,.browsewrap{display:flex;flex-direction:column;flex:1;min-height:0}
+.chatlog{flex:1;overflow-y:auto;padding:22px 22px 8px;scroll-behavior:smooth}
+.msg{margin-bottom:20px;max-width:88%}
+.msg.user{margin-left:auto}
+.bubble{padding:13px 16px;border-radius:16px;font-size:14.5px;line-height:1.55}
+.msg.ai .bubble{background:#f4f6fa;border:1px solid var(--line);border-bottom-left-radius:5px}
+.msg.user .bubble{background:var(--brand);color:#fff;border-bottom-right-radius:5px}
+.who{font-size:11.5px;font-weight:600;color:var(--ink2);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.msg.user .who{justify-content:flex-end}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.cards{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+.card{border:1px solid var(--line);border-radius:15px;padding:16px;background:#fff;transition:border-color .14s,box-shadow .14s}
+.card:hover{border-color:#c6cddb;box-shadow:0 6px 22px rgba(17,23,38,.07)}
+.card .ch{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.card h3{font-size:16.5px;line-height:1.25}
+.amt{font-family:'Fraunces',serif;font-weight:600;color:var(--gold);font-size:15px;white-space:nowrap;text-align:right}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;margin-top:8px}
+.tag.blue{background:var(--brand-soft);color:var(--brand-deep)}
+.tag.green{background:var(--green-soft);color:var(--green)}
+.tag.violet{background:var(--violet-soft);color:var(--violet)}
+.metrics{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px 0 2px;flex-wrap:wrap}
+.effort{flex:1;min-width:150px}
+.elabel{font-size:11.5px;font-weight:600;color:var(--ink2);display:block;margin-bottom:5px}
+.elabel b{font-family:'Fraunces',serif;color:var(--ink)}
+.meter{height:6px;border-radius:99px;background:#e9edf3;overflow:hidden}
+.meter .fill{height:100%;border-radius:99px}
+.fill.easy{background:var(--green)} .fill.mod{background:var(--gold)} .fill.hard{background:var(--hard)}
+.timeb{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink2);background:#f4f6fa;border:1px solid var(--line);padding:5px 10px;border-radius:99px;white-space:nowrap}
+.card .who2{font-size:13px;color:var(--ink2);line-height:1.5;margin:10px 0}
+.apply{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--brand);text-decoration:none;margin-top:2px}
+.apply:hover{color:var(--brand-deep);text-decoration:underline}
+.compose{border-top:1px solid var(--line);padding:14px 16px;display:flex;gap:10px;align-items:flex-end}
+.ta{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:14.5px;font-family:inherit;line-height:1.45;max-height:120px}
+.send{border:none;background:var(--brand);color:#fff;width:44px;height:44px;border-radius:12px;cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:background .12s}
+.send:hover{background:var(--brand-deep)}
+.send:disabled{opacity:.45;cursor:default}
+.typing{display:flex;gap:4px;padding:4px 2px}
+.typing span{width:7px;height:7px;background:#b8c0d0;border-radius:50%;animation:bp 1s infinite ease-in-out}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bp{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+.browsehead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}
+.browsehead .bc{font-size:13.5px;color:var(--ink2)}
+.browsehead .bc b{font-family:'Fraunces',serif;color:var(--ink);font-size:16px}
+.sortsel{font-size:13px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;font-family:inherit;color:var(--ink);width:auto}
+.browselist{flex:1;overflow-y:auto;padding:16px 18px}
+.browselist .card{margin-bottom:12px}
+.more{width:100%;padding:13px;border:1px dashed var(--line);background:#fff;border-radius:12px;font-family:inherit;font-size:14px;font-weight:600;color:var(--brand);cursor:pointer;margin:2px 0 6px;transition:all .12s}
+.more:hover{border-style:solid;border-color:var(--brand);background:var(--brand-soft)}
+.foot{font-size:12px;color:var(--ink2);text-align:center;margin-top:22px;line-height:1.5;max-width:640px;margin-left:auto;margin-right:auto}
+.suggest{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.sg{font-size:12.5px;border:1px dashed var(--line);background:#fff;padding:7px 12px;border-radius:10px;cursor:pointer;color:var(--ink2);font-family:inherit;transition:all .12s}
+.sg:hover{border-style:solid;border-color:var(--brand);color:var(--brand)}
+.loading,.empty{padding:40px 20px;text-align:center;color:var(--ink2);font-size:14px}
+@media(max-width:900px){ .grid{grid-template-columns:1fr} .mainpanel{height:74vh} .stat{display:none} }
+@media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useMemo } = React;
+const PAGE = 10;
+
+const SITUATIONS = [
+  { key: "veterans", label: "Veteran / military family" },
+  { key: "disability", label: "Student with a disability" },
+  { key: "need", label: "General / financial need" },
+  { key: "merit", label: "High achiever" },
+  { key: "stem", label: "STEM student" },
+  { key: "identity", label: "Community-based" },
+];
+const US_STATES = ["Any","CA","FL","GA","NY","TX","TN","WA","AL","AK","AZ","AR","CO","CT","DE","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NC","ND","OH","OK","OR","PA","RI","SC","SD","UT","VT","VA","WV","WI","WY","DC"];
+const LEVELS = [{ key:"any",label:"Any" },{ key:"hs-senior",label:"HS senior" },{ key:"college",label:"In college" }];
+const num = (n) => Number(n).toLocaleString("en-US");
+
+function localFilter(list, p) {
+  return list.filter((s) => {
+    if (p.situations.length && !p.situations.includes(s.cat) && s.cat !== "state") return false;
+    if (p.state !== "Any" && s.states !== "all" && s.states !== p.state) return false;
+    if (p.state === "Any" && s.states !== "all" && p.situations.length && !p.situations.includes("state")) return false;
+    if (p.gpa && s.gpa && s.gpa > Number(p.gpa)) return false;
+    if (s.max < p.minAward) return false;
+    if (s.difficulty && p.maxDifficulty < 10 && s.difficulty > p.maxDifficulty) return false;
+    if (p.level !== "any" && s.level !== "any" && s.level !== p.level && s.level !== "college") {
+      if (!(p.level === "college" && s.level === "hs-senior")) return false;
+    }
+    return true;
+  });
+}
+
+function band(d) {
+  if (!d) return { label: "—", cls: "mod", w: 0 };
+  if (d <= 3) return { label: "Easy", cls: "easy", w: d * 10 };
+  if (d <= 6) return { label: "Moderate", cls: "mod", w: d * 10 };
+  return { label: "Competitive", cls: "hard", w: d * 10 };
+}
+const Clock = () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>);
+
+function Card({ s, cats }) {
+  const cat = cats[s.cat] || { label: "Scholarship", tone: "blue" };
+  const b = band(s.difficulty);
+  return (
+    <div className="card">
+      <div className="ch">
+        <h3>{s.name}</h3>
+        <span className="amt">{s.amt}</span>
+      </div>
+      <span className={"tag " + cat.tone}>{cat.label}{s.states !== "all" ? " · " + s.states : ""}{s.gpa ? " · " + s.gpa + " GPA" : ""}</span>
+      <div className="metrics">
+        <div className="effort">
+          <span className="elabel">Effort <b>{s.difficulty}/10</b> · {b.label}</span>
+          <div className="meter"><div className={"fill " + b.cls} style={{ width: b.w + "%" }} /></div>
+        </div>
+        {s.time && <span className="timeb"><Clock /> {s.time}</span>}
+      </div>
+      <p className="who2">{s.who}</p>
+      <a className="apply" href={s.url} target="_blank" rel="noopener noreferrer">
+        Apply on the official site
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg>
+      </a>
+    </div>
+  );
+}
+
+function App() {
+  const [db, setDb] = useState(null);
+  const [cats, setCats] = useState({});
+  const [loadErr, setLoadErr] = useState(false);
+  const [tab, setTab] = useState("ask");
+  const [sort, setSort] = useState("easy");
+  const [visible, setVisible] = useState(PAGE);
+  const [profile, setProfile] = useState({ situations: [], state: "Any", gpa: "", level: "any", minAward: 0, maxDifficulty: 10 });
+  const [messages, setMessages] = useState([
+    { role: "ai", text: "Hi — I'm Beacon. Tell me a bit about yourself, or set your profile on the left, and I'll point you to real scholarships you can actually apply for. Nothing invented, every link official.", cards: [] },
+  ]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const logRef = useRef(null);
+
+  useEffect(() => {
+    fetch("/api/list").then((r) => r.json()).then((d) => { setDb(d.scholarships); setCats(d.cats); })
+      .catch(() => setLoadErr(true));
+  }, []);
+
+  const filtered = useMemo(() => (db ? localFilter(db, profile) : []), [db, profile]);
+  const sorted = useMemo(() => {
+    const a = [...filtered];
+    if (sort === "easy") a.sort((x, y) => (x.difficulty - y.difficulty) || (y.max - x.max));
+    else if (sort === "award") a.sort((x, y) => y.max - x.max);
+    else a.sort((x, y) => x.name.localeCompare(y.name));
+    return a;
+  }, [filtered, sort]);
+
+  useEffect(() => { setVisible(PAGE); }, [sorted]);
+  useEffect(() => { if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight; }, [messages, busy, tab]);
+
+  const toggleSit = (k) => setProfile((p) => ({ ...p, situations: p.situations.includes(k) ? p.situations.filter((x) => x !== k) : [...p.situations, k] }));
+
+  function profileText() {
+    const parts = [];
+    if (profile.situations.length) parts.push("Situation: " + profile.situations.map((k) => SITUATIONS.find((s) => s.key === k)?.label).join(", "));
+    if (profile.state !== "Any") parts.push("State: " + profile.state);
+    if (profile.gpa) parts.push("GPA: " + profile.gpa);
+    if (profile.level !== "any") parts.push("Level: " + LEVELS.find((l) => l.key === profile.level)?.label);
+    if (profile.minAward > 0) parts.push("Min award: $" + num(profile.minAward));
+    if (profile.maxDifficulty < 10) parts.push("Max effort: " + profile.maxDifficulty + "/10");
+    return parts.length ? parts.join(" · ") : "No profile details set.";
+  }
+
+  async function send(raw) {
+    const userMsg = (raw ?? input).trim();
+    if (!userMsg || busy || !db) return;
+    setTab("ask");
+    const history = [...messages, { role: "user", text: userMsg, cards: [] }];
+    setMessages(history);
+    setInput("");
+    setBusy(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ profile, messages: history.map((m) => ({ role: m.role, text: m.text })) }),
+      });
+      const data = await res.json();
+      const cards = (data.matches || []).map((id) => db.find((s) => s.id === id)).filter(Boolean).map((s) => ({ s }));
+      setMessages([...history, { role: "ai", text: data.reply || "Here are some options.", cards }]);
+    } catch {
+      setMessages([...history, { role: "ai", text: "Something went wrong reaching the server. Please try again in a moment.", cards: [] }]);
+    }
+    setBusy(false);
+  }
+
+  function findMatches() { send("Find scholarships that fit me. " + profileText()); }
+
+  const suggestions = ["I'm an Army veteran's child in Texas", "Quick, low-effort scholarships", "3.8 GPA, need-based, any state", "Full-ride scholarships for STEM"];
+  const remaining = sorted.length - visible;
+
+  return (
+    <div className="wrap">
+      <header className="top">
+        <div className="brand">
+          <div className="mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v3M12 22a6 6 0 0 1-6-6c0-2 1-3.5 2.5-5M12 22a6 6 0 0 0 6-6c0-2-1-3.5-2.5-5" />
+              <path d="M8.5 11 12 6l3.5 5" /><path d="M7 16h10" />
+            </svg>
+          </div>
+          <div>
+            <h1>Beacon</h1>
+            <div className="sub">Real US scholarships, matched to you</div>
+          </div>
+        </div>
+        <div className="stat"><b>{db ? db.length : "—"} programs</b>verified &amp; linked · 2025–26</div>
+      </header>
+
+      <div className="grid">
+        <aside className="panel side">
+          <div className="lead">Your profile</div>
+          <p className="hint">Set what fits you. Filters apply to both tabs.</p>
+
+          <div className="field">
+            <label>Which describes you? (pick any)</label>
+            <div className="chips">
+              {SITUATIONS.map((s) => (
+                <button key={s.key} className={"chip " + (profile.situations.includes(s.key) ? "on" : "")} onClick={() => toggleSit(s.key)}>{s.label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="row2">
+            <div className="field">
+              <label>State</label>
+              <select value={profile.state} onChange={(e) => setProfile((p) => ({ ...p, state: e.target.value }))}>
+                {US_STATES.map((s) => <option key={s} value={s}>{s === "Any" ? "Any state" : s}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>GPA</label>
+              <input type="number" step="0.1" min="0" max="4" placeholder="e.g. 3.5" value={profile.gpa} onChange={(e) => setProfile((p) => ({ ...p, gpa: e.target.value }))} />
+            </div>
+          </div>
+
+          <div className="field">
+            <label>Level</label>
+            <div className="chips">
+              {LEVELS.map((l) => <button key={l.key} className={"chip " + (profile.level === l.key ? "on" : "")} onClick={() => setProfile((p) => ({ ...p, level: l.key }))}>{l.label}</button>)}
+            </div>
+          </div>
+
+          <div className="field">
+            <label>Minimum award</label>
+            <input className="range" type="range" min="0" max="20000" step="1000" value={profile.minAward} onChange={(e) => setProfile((p) => ({ ...p, minAward: Number(e.target.value) }))} />
+            <div className="range-val"><span>Any amount</span><b>{profile.minAward === 0 ? "Any" : "$" + num(profile.minAward) + "+"}</b></div>
+          </div>
+
+          <div className="field">
+            <label>Max effort</label>
+            <input className="range" type="range" min="1" max="10" step="1" value={profile.maxDifficulty} onChange={(e) => setProfile((p) => ({ ...p, maxDifficulty: Number(e.target.value) }))} />
+            <div className="range-val"><span>Easiest first</span><b>{profile.maxDifficulty === 10 ? "Any" : "≤ " + profile.maxDifficulty + "/10"}</b></div>
+          </div>
+
+          <div className="count"><b>{filtered.length}</b> program{filtered.length === 1 ? "" : "s"} match your filters. Ask Beacon, or open the Browse tab.</div>
+          <button className="find" onClick={findMatches} disabled={busy || !db}>Find my matches</button>
+        </aside>
+
+        <section className="panel mainpanel">
+          <div className="tabbar">
+            <button className={"tab " + (tab === "ask" ? "on" : "")} onClick={() => setTab("ask")}>Ask Beacon</button>
+            <button className={"tab " + (tab === "browse" ? "on" : "")} onClick={() => setTab("browse")}>Browse{db ? " (" + filtered.length + ")" : ""}</button>
+          </div>
+
+          {tab === "ask" ? (
+            <div className="chatwrap">
+              <div className="chatlog" ref={logRef}>
+                {loadErr && <div className="loading">Couldn't load the scholarship data. If you're opening this file directly, deploy it to Vercel first — the app needs its API to run.</div>}
+                {messages.map((m, i) => (
+                  <div key={i} className={"msg " + m.role}>
+                    <div className="who">{m.role === "ai" ? <React.Fragment><span className="dot" /> Beacon</React.Fragment> : "You"}</div>
+                    <div className="bubble">{m.text}</div>
+                    {m.cards && m.cards.length > 0 && <div className="cards">{m.cards.map((c, j) => <Card key={j} s={c.s} cats={cats} />)}</div>}
+                    {i === 0 && !loadErr && (
+                      <div className="suggest">{suggestions.map((s) => <button key={s} className="sg" onClick={() => send(s)}>{s}</button>)}</div>
+                    )}
+                  </div>
+                ))}
+                {busy && (
+                  <div className="msg ai">
+                    <div className="who"><span className="dot" /> Beacon</div>
+                    <div className="bubble"><div className="typing"><span /><span /><span /></div></div>
+                  </div>
+                )}
+              </div>
+              <div className="compose">
+                <textarea className="ta" rows={1} value={input} placeholder="Ask anything — e.g. 'easy scholarships for a disabled veteran's daughter in Ohio'"
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
+                <button className="send" onClick={() => send()} disabled={busy || !input.trim()} aria-label="Send">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="browsewrap">
+              <div className="browsehead">
+                <span className="bc"><b>{filtered.length}</b> scholarship{filtered.length === 1 ? "" : "s"} match your filters</span>
+                <select className="sortsel" value={sort} onChange={(e) => setSort(e.target.value)}>
+                  <option value="easy">Easiest first</option>
+                  <option value="award">Biggest award</option>
+                  <option value="az">A–Z</option>
+                </select>
+              </div>
+              <div className="browselist">
+                {!db && <div className="loading">Loading scholarships…</div>}
+                {db && sorted.length === 0 && <div className="empty">No scholarships match these filters. Try widening your state, GPA, minimum award, or max effort.</div>}
+                {sorted.slice(0, visible).map((s) => <Card key={s.id} s={s} cats={cats} />)}
+                {remaining > 0 && (
+                  <button className="more" onClick={() => setVisible((v) => v + PAGE)}>
+                    Want to see more? ({remaining} more)
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
+
+      <p className="foot">Beacon recommends only real, verified programs and links to official application pages. Effort scores and time estimates are rough guides. Award amounts, GPA rules, and deadlines change each cycle — always confirm details on the scholarship's own site before applying. Not affiliated with any listed organization.</p>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
